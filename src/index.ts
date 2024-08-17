@@ -7,11 +7,11 @@ import { err, ok, Result } from "neverthrow";
 
 // chapter6
 // smart constructors
-class Person {
-  constructor(readonly name: string, readonly age: number) {}
-}
+// class Person {
+//   constructor(readonly name: string, readonly age: number) {}
+// }
 // ageにありえない値を入れることができる
-const tarou = new Person("Tarou", -20);
+// const tarou = new Person("Tarou", -20);
 // { name: 'Tarou', age: -20 }
 
 // これを防ぐためにsmart constructorsを使う
@@ -36,18 +36,33 @@ const tarou = new Person("Tarou", -20);
 //   return { ken, dan };
 // });
 
-class Person2 {
+type hoge = new () => Person;
+class Person {
+  // インスタンス生成時に制約を設けるため、private constructorを使う
   private constructor(readonly name: string, readonly age: number) {}
 
-  static create(name: string, age: number): Result<Person2, Error> {
-    if (age < 0 || age > 120 || name.length === 0 || name.length > 100) {
-      return err(new Error("Invalid arguments"));
+  static create({
+    name,
+    age,
+  }: {
+    name: string;
+    age: number;
+  }): Result<Person, Error> {
+    if (age < 0 || age > 120) {
+      return err(new Error("Invalid age"));
     }
-    return ok(new Person2(name, age));
+
+    if (name.length === 0 || name.length > 100) {
+      return err(new Error("Invalid name"));
+    }
+
+    return ok(new Person(name, age));
   }
 }
 //　Result使うだけなら、neverthrowのほうがわかりやすい
-const ken = Person2.create("ken", -90);
+const ken = Person.create({ name: "", age: 90 });
+console.log(ken.unwrapOr("error"));
+
 if (ken.isOk()) {
   console.log(ken.value);
 } else {
